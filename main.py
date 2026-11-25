@@ -2,7 +2,11 @@
 """The Most Boring Object, Reviewed in One Line.
 
 Writes one funny, true one-line review of a boring everyday object to
-entry.txt in this directory. Deterministic: same bytes on every run.
+/output/entry.txt ONLY. The grade sandbox mounts the repo read-only
+and provides /output as the writable directory; the gate reads
+/output/entry.txt. Writing beside __file__ fails there (the open
+raises, the program exits 1, run_completes fails), so this program
+never writes anywhere else. Deterministic: same bytes on every run.
 """
 
 import hashlib
@@ -16,15 +20,20 @@ ENTRY = (
 
 MAX_CHARS = 200
 
+# The grade sandbox's writable directory; the gate reads this file.
+OUTPUT_DIR = "/output"
+OUTPUT_PATH = os.path.join(OUTPUT_DIR, "entry.txt")
+
 
 def entry_path():
-    """entry.txt lives next to this script (the work dir), never /output."""
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "entry.txt")
+    """Deterministic output location: /output/entry.txt."""
+    return OUTPUT_PATH
 
 
 def write_entry(path):
     """Write the entry as UTF-8, no trailing newline, and return its sha256."""
     data = ENTRY.encode("utf-8")
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     with open(path, "wb") as fh:
         fh.write(data)
     return hashlib.sha256(data).hexdigest()
